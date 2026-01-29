@@ -1,0 +1,33 @@
+{
+  "name": "portal-claro-flex-e2e",
+  "version": "1.0.0",
+  "description": "Projeto de automação de testes E2E com Playwright e TypeScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:ui": "npx playwright test --ui",
+    "test:report": "npx playwright show-report",
+    "test:allure": "allure serve allure-results",
+    "test:allure:clean": "rm -rf allure-results allure-report && npx playwright test",
+    "test:list": "npx playwright test --list",
+    "test:verbose": "npx playwright test --reporter=list --verbose",
+    "verify": "node -e \"console.log('Node:', process.version); require('@playwright/test'); console.log('Playwright: OK');\""
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "e2e",
+    "test-automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^20.10.0",
+    "allure": "^0.0.0",
+    "allure-playwright": "^3.4.5",
+    "typescript": "^5.3.3"
+  }
+}

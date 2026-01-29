@@ -1,0 +1,17 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+playwright/.cache/
+*.log
+
+# Arquivos de ambiente (contém credenciais)
+.env
+.env.local
+.env.*.local
+
+# Screenshots e vídeos de teste
+test-results/screenshots/
+test-results/videos/
