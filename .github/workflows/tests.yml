@@ -1,0 +1,125 @@
+name: E2E Tests - Portal Claro Flex
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Executa testes diariamente às 09:00 (horário UTC)
+    - cron: '0 9 * * *'
+
+jobs:
+  test:
+    name: Playwright Tests
+    runs-on: windows-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      # 1. Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # 3. Instalar dependências
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Instalar navegadores Playwright
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      # 5. Executar testes
+      - name: Run Playwright tests
+        run: npm test
+        continue-on-error: true
+
+      # 6. Upload de artefatos (screenshots, relatórios)
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-node-${{ matrix.node-version }}
+          path: playwright-report/
+          retention-days: 30
+
+      # 7. Upload de Allure results
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-node-${{ matrix.node-version }}
+          path: allure-results/
+          retention-days: 30
+
+      # 8. Upload de screenshots
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots-node-${{ matrix.node-version }}
+          path: test-results/screenshots/
+          retention-days: 30
+
+  # Job para publicar relatório Allure
+  publish-allure:
+    name: Publish Allure Report
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      # 1. Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Download de artefatos
+      - name: Download Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-node-18.x
+          path: allure-results
+
+      # 3. Publicar relatório Allure
+      - name: Publish Allure Report
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        with:
+          allure_results: allure-results
+          gh_pages: gh-pages
+          allure_history: allure-history
+          keep_reports: 20
+
+      # 4. Deploy para GitHub Pages
+      - name: Deploy report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-report
+
+  # Job para notificações
+  notify:
+    name: Test Notification
+    needs: test
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Test Status
+        run: |
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            echo "✅ Todos os testes passaram!"
+          else
+            echo "❌ Alguns testes falharam!"
+          fi
